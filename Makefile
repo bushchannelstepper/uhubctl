@@ -14,7 +14,7 @@ PKG_CONFIG	?= pkg-config
 
 CC ?= gcc
 CFLAGS ?= -g -O0
-CFLAGS += -Wall -Wextra -std=c99 -pedantic
+CFLAGS += -Wall -Wextra -Wno-zero-length-array -std=c99 -pedantic
 GIT_VERSION := $(shell git describe --match "v[0-9]*" --abbrev=8 --dirty --tags | cut -c2-)
 ifeq ($(GIT_VERSION),)
 	GIT_VERSION := $(shell cat VERSION)
@@ -31,11 +31,16 @@ ifneq (,$(shell which $(PKG_CONFIG)))
 	CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
 	LDFLAGS += $(shell $(PKG_CONFIG) --libs libusb-1.0)
 else
-# But it should still build if pkg-config is not available (e.g. Linux or Mac homebrew)
+# But it should still build even if pkg-config is not available
+	CFLAGS += -I/usr/include/libusb-1.0
 	LDFLAGS += -lusb-1.0
 endif
 
 PROGRAM = uhubctl
+
+.PHONY: all install clean
+
+all: $(PROGRAM)
 
 $(PROGRAM): $(PROGRAM).c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $@.c -o $@ $(LDFLAGS)
